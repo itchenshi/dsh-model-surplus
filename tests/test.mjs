@@ -1,4 +1,4 @@
-// dsh-model-usage local behaviour tests (no network, no engine).
+// dsh-model-surplus local behaviour tests (no network, no engine).
 // Run: node tests/test.mjs
 
 import assert from 'node:assert/strict'
@@ -41,7 +41,7 @@ globalThis.window = {
 await import('../client/client.js')
 assert.equal(registrations.length, 1, 'bundle must register exactly one factory')
 const registration = registrations[0]
-assert.equal(registration.id, 'dsh-model-usage', 'factory id must be the package name')
+assert.equal(registration.id, 'dsh-model-surplus', 'factory id must be the package name')
 assert.equal(typeof registration.factory, 'function', 'factory must be a function')
 
 // The browser-side cordis runner builds the fiber inject from the bundle's
@@ -89,7 +89,7 @@ async function check(label, fn) {
   }
 }
 
-console.log('dsh-model-usage tests\n--- host half: opencode-go usage ---')
+console.log('dsh-model-surplus tests\n--- host half: opencode-go usage ---')
 
 await check('normalizeBucket accepts a real payload and clamps', () => {
   assert.deepEqual(normalizeBucket({ status: 'ok', percent: 13, resetsAt: '2026-09-10T16:02:32.008Z' }), {

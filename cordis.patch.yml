@@ -1,4 +1,9 @@
-# dsh-model-usage layer.
+# dsh-model-surplus layer.
+#
+# The row `id` stays `model-usage` on purpose: it is the identity the profile's
+# patch layer and the marketplace state.json have recorded for the user's
+# enable/disable choice, and it is independent of the package name. Renaming the
+# package must not orphan that choice.
 #
 # Shows model usage / account balance in the session header, gated on the
 # session's ACTIVE model selection:
@@ -35,7 +40,7 @@
 # read as the opencodeGo section (the plugin used to be OpenCode-Go-only).
 - insert:
     - id: model-usage
-      name: dsh-model-usage
+      name: dsh-model-surplus
       config:
         enabled: true
         opencodeGo:

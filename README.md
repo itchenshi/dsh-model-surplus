@@ -1,4 +1,4 @@
-# dsh-model-usage
+# dsh-model-surplus
 
 Shows **model usage / account balance** in the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 session header, gated on the session's **active model selection**:
@@ -138,12 +138,16 @@ looks up `limits[modelId]`.
 ## Install
 
 ```sh
-dsh plugin --profile web add dsh-model-usage
+dsh plugin --profile web add dsh-model-surplus
 ```
 
 Restart `dsh web` (or reopen DSH GUI) afterwards. The same package can be installed
-from DSH GUI's Settings → Third-party plugins, or one-click from the
-[plugin marketplace](https://github.com/dsh-market/dsh-market).
+from DSH GUI's Settings → Third-party plugins (listed as **模型余量**), or one-click
+from the [plugin marketplace](https://github.com/dsh-market/dsh-market).
+
+> **Renamed from `dsh-model-usage`.** Three other GitHub repositories already used
+> that exact name, so the package was renamed before its first publish. The patch
+> row `id` stays `model-usage`, so an existing enable/disable choice is not lost.
 
 ## Configuration
 
@@ -152,7 +156,7 @@ The plugin row lives in `cordis.patch.yml`; every key is optional:
 ```yaml
 - insert:
     - id: model-usage
-      name: dsh-model-usage
+      name: dsh-model-surplus
       config:
         enabled: true
 

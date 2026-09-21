@@ -1,4 +1,4 @@
-// End-to-end: with dsh-model-usage installed, verify the engine boots, the
+// End-to-end: with dsh-model-surplus installed, verify the engine boots, the
 // usage/balance route returns real data, the client bundle loads, and the
 // widget renders in the header next to the title.
 const { spawn } = require('child_process');

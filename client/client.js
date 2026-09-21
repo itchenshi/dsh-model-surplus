@@ -1,4 +1,4 @@
-// dsh-model-usage — client (browser) half.
+// dsh-model-surplus — client (browser) half.
 //
 // Shows model usage / account balance in the Session header, gated on the
 // session's ACTIVE model selection:
@@ -45,7 +45,7 @@
 // in cordis.patch.yml takes effect without touching this file.
 
 window.__ModuleLoader__.load({
-  id: 'dsh-model-usage',
+  id: 'dsh-model-surplus',
   factory: (require) => {
     const React = require('react')
     const jsx = require('react/jsx-runtime')
