@@ -149,6 +149,34 @@ from the [plugin marketplace](https://github.com/dsh-market/dsh-market).
 > that exact name, so the package was renamed before its first publish. The patch
 > row `id` stays `model-usage`, so an existing enable/disable choice is not lost.
 
+## Permissions, dependencies and failure bounds
+
+Marketplaces that pin a commit (DSH STORE and similar) statically review the runtime
+source and report the permissions they detect. The facts, so none of it has to be
+inferred:
+
+- **Runtime dependencies:** none — Node built-ins only (`node:path`, `node:fs/promises`).
+  The host half is plain ESM with no `node_modules` requirement of its own.
+- **Outbound network: yes, three hosts**, all from the **host half**. The page half
+  never talks to anything but the local route below.
+  - `GET https://opencode.ai/zen/go/v1/usage` — OpenCode Go plan usage (`OPENCODE_GO_API_KEY`).
+  - `GET https://api.deepseek.com/user/balance` — DeepSeek account balance (`DEEPSEEK_API_KEY`).
+  - `GET https://opencode.ai/docs/zh-cn/go/` — the documented per-model monthly cap,
+    scraped because the gateway's own `/models` response carries no limits.
+- **Local route: yes, one.** The host registers a single page-facing route and the page
+  half calls it same-origin. It goes through the engine's trust fence (Host allow-list
+  plus browser session cookie) and **fails closed** when the fence is unavailable.
+- **Files: yes, one cache.** `<DSH_HOME>/logs/model-surplus-limits.json` holds the
+  scraped limits table so a restart does not re-scrape. Nothing else is read or written,
+  and no user file is ever touched.
+- **Credentials:** read through `ctx.credentials` in the host half only. They are never
+  included in any response to the page.
+- **Commands / native artifacts / lifecycle scripts:** none.
+- **Failure bounds:** the two sections report their own outcomes independently, so a
+  missing key or an unreachable upstream degrades that half alone and shows why. The
+  plugin never blocks engine startup — a load failure is reported by the engine, and
+  removing it restores the plain header.
+
 ## Configuration
 
 The plugin row lives in `cordis.patch.yml`; every key is optional:
