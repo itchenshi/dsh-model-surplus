@@ -122,7 +122,7 @@ and there is **no API** for the per-model monthly caps documented under
 2. **auto-refreshes** by fetching the public docs page
    (`https://opencode.ai/docs/zh-cn/go/` — server-rendered, no JS, **no API
    key**) and parsing the limits + model-id tables into `model id → monthly $`,
-3. **caches** the parsed result at `$DSH_HOME/logs/model-usage-limits.json`,
+3. **caches** the parsed result at `$DSH_HOME/logs/model-surplus-limits.json`,
 4. **falls back** cache → built-in on any fetch/parse failure.
 
 Refresh schedule: at plugin start (background), then every 24h. The widget shows
