@@ -3,6 +3,10 @@
 [![English](https://img.shields.io/badge/README-English-green)](README.en.md)
 [![中文](https://img.shields.io/badge/README-中文-blue)](README.md)
 
+> One of the plugins bundled with **DSH Ready GUI** — the GUI ships all four, ready to tick.
+> Each one also installs standalone into any DSH host (see "Install and go" below).
+> GUI: https://github.com/itchenshi/dsh-ready-gui
+
 Shows **usage / account balance for the active model**, right of the
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) session title — whichever model the
 conversation is on, that is the number you see, with no page to go and check.
@@ -27,15 +31,18 @@ shows or hides it immediately, with no refresh.
 - **Using DSH Ready GUI (recommended)**: the plugin **ships inside the GUI**. Open the GUI → Settings
   → Third-party plugins → tick **Model surplus**, then restart the engine and refresh the page as
   prompted (it has a page half).
-- **Any other DSH host** (`dsh web`, the CLI):
+- **Any other DSH host** (`dsh web`, the CLI) — either route works:
 
   ```sh
-  git clone https://github.com/itchenshi/dsh-model-surplus.git
-  dsh plugin --profile web add file:<absolute path of the clone>
+  # Recommended: install straight from GitHub (recorded in your profile, updatable)
+  dsh plugin --profile web add github:itchenshi/dsh-model-surplus
+
+  # Fallback: install the release tarball (use this if github.com is unreachable for you)
+  dsh plugin --profile web add https://github.com/itchenshi/dsh-model-surplus/releases/download/v0.3.2/dsh-model-surplus-0.3.2.tar.gz
   ```
 
-  That installs the real on-disk directory, so a later `git pull` updates the very code in use — but
-  moving or deleting the directory breaks the dependency (just add it again).
+  Both land the full repository contents (including `cordis.patch.yml`); no extra configuration
+  is needed afterwards.
 
 > Not on npm yet: sign-up is unreachable (`www.npmjs.com` answers with a Cloudflare challenge), so
 > nothing can be published. Use one of the two routes above; publishing resumes once sign-up works.
