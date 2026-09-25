@@ -14,13 +14,15 @@ conversation is on, that is the number you see, with no page to go and check.
 ```
 ┌─ session header ───────────────────────────────────────────────────────────┐
 │  My conversation  [OpenCode Go rolling 18% weekly 82% monthly 42% cap $60] open ▾ │
-│  Another one      [DeepSeek ¥110.00]                                       open ▾ │
+│  Another one      [Command Code 5h 17.9% wk 17.1% left $13.50]             open ▾ │
+│  One more         [DeepSeek ¥110.00]                                       open ▾ │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Active model route | What it shows | Where the data comes from |
 |---|---|---|
 | `opencode-go` / `opencode` | Plan usage: rolling / weekly / monthly **percentages** + reset times, plus the **selected model's** monthly cap (`cap $60`) | `GET https://opencode.ai/zen/go/v1/usage` + a per-model cap table |
+| `commandcode-goat` / `commandcode` | **5-hour / weekly** window percentages (with used / cap) + **remaining credits** | `GET https://api.commandcode.ai/alpha/billing/credits` |
 | `deepseek-official` | Account **balance**: total / granted / topped up (shows "insufficient balance" when unavailable) | `GET https://api.deepseek.com/user/balance` |
 
 It only appears while the session's selected model belongs to a tracked provider — switching models
@@ -37,8 +39,8 @@ shows or hides it immediately, with no refresh.
   # Recommended: install straight from GitHub (recorded in your profile, updatable)
   dsh plugin --profile web add github:itchenshi/dsh-model-surplus
 
-  # Fallback: install the release tarball (use this if github.com is unreachable for you)
-  dsh plugin --profile web add https://github.com/itchenshi/dsh-model-surplus/releases/download/v0.3.2/dsh-model-surplus-0.3.2.tar.gz
+  # Fallback: this release's tarball (for when the git protocol fails but HTTPS works)
+  dsh plugin --profile web add https://github.com/itchenshi/dsh-model-surplus/releases/download/v0.4.0/dsh-model-surplus-0.4.0.tar.gz
   ```
 
   Both land the full repository contents (including `cordis.patch.yml`); no extra configuration
@@ -53,11 +55,24 @@ service by reference, and **keys never reach the browser**:
 | Route | Credential |
 |---|---|
 | OpenCode Go | `OPENCODE_GO_API_KEY` |
+| Command Code | `COMMANDCODE_GOAT_API_KEY` |
 | DeepSeek | `DEEPSEEK_API_KEY` |
 
-The two sections report **independently**: with only one key configured the other half still works, and
-the missing half shows a reason (`no-key` / `unauthorized` / `network` / `timeout` / `bad-payload`)
+The three sections report **independently**: with only one key configured the other halves still work,
+and the missing half shows a reason (`no-key` / `unauthorized` / `network` / `timeout` / `bad-payload`)
 instead of hiding the whole widget.
+
+## Two things worth knowing about the Command Code section
+
+**1. It queries the quota API, not the chat API.** The URL configured on a DSH route is the chat
+endpoint, `https://api.commandcode.ai/provider/v1`, while the quota API sits one level up at the bare
+root (`/alpha/billing/credits`). The plugin strips the `/provider/v1` path, so either form works in the
+config.
+
+**2. It deliberately shows no monthly percentage.** The endpoint reports the two windows it actually
+enforces (5-hour and weekly) as used / cap, plus the credits that remain — but it never states the
+plan's monthly allotment. A monthly bar would therefore require a hard-coded plan table (Go / GOAT /
+Max), which would be a guess, so it is left out.
 
 ## Where the per-model monthly cap comes from
 
@@ -93,6 +108,12 @@ percentages are account-level while the cap is per-model.
           baseUrl: https://api.deepseek.com        # upstream root
           apiKeyRef: DEEPSEEK_API_KEY              # credential reference
           providers: [deepseek-official]           # the engine's DeepSeek route
+
+        commandcode:
+          # quota API root; the chat url (.../provider/v1) is accepted too and normalized
+          baseUrl: https://api.commandcode.ai
+          apiKeyRef: COMMANDCODE_GOAT_API_KEY      # credential reference
+          providers: [commandcode-goat, commandcode]  # routes treated as Command Code
 ```
 
 Changing `providers` is enough to move another route into a section — **no page code changes**: the
@@ -107,9 +128,11 @@ once, so none of them has to be inferred:
 
 - **Runtime dependencies: none.** Node built-ins only (`node:path`, `node:fs/promises`); the host half
   is plain ESM and needs no `node_modules` of its own.
-- **Outbound network: yes, three hosts**, all from the **host** side (the page half only calls the local
+- **Outbound network: yes, four hosts**, all from the **host** side (the page half only calls the local
   route below):
   - `GET https://opencode.ai/zen/go/v1/usage` — OpenCode Go plan usage (`OPENCODE_GO_API_KEY`)
+  - `GET https://api.commandcode.ai/alpha/billing/credits` — Command Code window usage and remaining
+    credits (`COMMANDCODE_GOAT_API_KEY`)
   - `GET https://api.deepseek.com/user/balance` — DeepSeek account balance (`DEEPSEEK_API_KEY`)
   - `GET https://opencode.ai/docs/zh-cn/go/` — the documented per-model monthly caps; the page is
     fetched because the gateway's own `/models` response carries no cap information at all

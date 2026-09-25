@@ -13,13 +13,15 @@
 ```
 ┌─ 会话标题栏 ───────────────────────────────────────────────────────────────┐
 │  我的对话     [OpenCode Go 滚动 18% 周 82% 月 42% 上限 $60]        打开功能 ▾ │
-│  另一个对话   [DeepSeek ¥110.00]                                   打开功能 ▾ │
+│  另一个对话   [Command Code 5 小时 17.9% 周 17.1% 剩余 $13.50]     打开功能 ▾ │
+│  还有一个     [DeepSeek ¥110.00]                                   打开功能 ▾ │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
 | 当前模型路由 | 显示什么 | 数据从哪来 |
 |---|---|---|
 | `opencode-go` / `opencode` | 套餐用量：滚动 / 周 / 月**百分比** + 重置时间，外加**所选模型**的月度上限（`上限 $60`） | `GET https://opencode.ai/zen/go/v1/usage` + 单模型上限表 |
+| `commandcode-goat` / `commandcode` | **5 小时 / 周**两个窗口的百分比（含已用 / 上限）+ **剩余额度** | `GET https://api.commandcode.ai/alpha/billing/credits` |
 | `deepseek-official` | 账户**余额**：总 / 赠送 / 充值（余额不足时显示「余额不足」） | `GET https://api.deepseek.com/user/balance` |
 
 只有当会话选中的模型属于受跟踪的 provider 时它才出现 —— 切模型就立刻显示/隐藏，不用刷新。
@@ -34,8 +36,8 @@
   # 推荐：直接从 GitHub 装（记进 profile，之后可跟着更新）
   dsh plugin --profile web add github:itchenshi/dsh-model-surplus
 
-  # 备选：从本仓库 Release 的 tarball 装（网络受限连不上 github.com 时用这条）
-  dsh plugin --profile web add https://github.com/itchenshi/dsh-model-surplus/releases/download/v0.3.2/dsh-model-surplus-0.3.2.tar.gz
+  # 备选：本 Release 的 tarball（git 协议走不通、但 HTTPS 能通时用这条）
+  dsh plugin --profile web add https://github.com/itchenshi/dsh-model-surplus/releases/download/v0.4.0/dsh-model-surplus-0.4.0.tar.gz
   ```
 
   两条命令装到的都是这个仓库的完整内容（含 `cordis.patch.yml`），装完不需要额外配置。
@@ -48,10 +50,21 @@
 | 路由 | 凭据名 |
 |---|---|
 | OpenCode Go | `OPENCODE_GO_API_KEY` |
+| Command Code | `COMMANDCODE_GOAT_API_KEY` |
 | DeepSeek | `DEEPSEEK_API_KEY` |
 
-两个分区**各自独立**上报结果：只配了其中一个密钥，另一半照样能用，缺的那半显示一条原因
+三个分区**各自独立**上报结果：只配了其中一个密钥，另外两半照样能用，缺的那半显示一条原因
 （`no-key` / `unauthorized` / `network` / `timeout` / `bad-payload`），而不是把整个小组件藏起来。
+
+## Command Code 分区的两个细节
+
+**一、它查的是额度接口，不是聊天接口。** DSH 路由上配的是聊天地址
+`https://api.commandcode.ai/provider/v1`，而额度接口在**上一层**的根路径
+（`/alpha/billing/credits`）。插件会自动把 `/provider/v1` 去掉，所以你在配置里写哪个都行。
+
+**二、它不显示「月度百分比」。** 接口给的是它实际执行的两个窗口（5 小时、周）的
+已用 / 上限，以及**剩余额度**；但**没有**给出套餐的月度总额度。所以这里只显示两个窗口的百分比
+和剩余额度 —— 要有月度百分比就得内置一张套餐表（按 Go / GOAT / Max 档位），那属于猜测，不如不显示。
 
 ## 单模型月度上限是怎么来的
 
@@ -85,6 +98,12 @@ OpenCode Go 的用量接口**按账户统计**，忽略单模型参数；而[官
           baseUrl: https://api.deepseek.com        # 上游根地址
           apiKeyRef: DEEPSEEK_API_KEY              # 凭据引用
           providers: [deepseek-official]           # 引擎的 DeepSeek 路由
+
+        commandcode:
+          # 额度接口的根地址；写聊天地址 .../provider/v1 也认（会自动去掉那一层）
+          baseUrl: https://api.commandcode.ai
+          apiKeyRef: COMMANDCODE_GOAT_API_KEY      # 凭据引用
+          providers: [commandcode-goat, commandcode]  # 视为 Command Code 的路由
 ```
 
 改 `providers` 就能把别的路由划进某个分区，**不用改页面代码**——供应商到分区的映射由宿主端每次
@@ -97,8 +116,10 @@ OpenCode Go 的用量接口**按账户统计**，忽略单模型参数；而[官
 
 - **运行依赖：无。** 只用 Node 内建模块（`node:path`、`node:fs/promises`）；宿主半边是纯 ESM，
   自身不要求 `node_modules`。
-- **对外网络：有，三个主机**，全部来自**宿主端**（页面端只调下面那条本地路由）：
+- **对外网络：有，四个主机**，全部来自**宿主端**（页面端只调下面那条本地路由）：
   - `GET https://opencode.ai/zen/go/v1/usage` —— OpenCode Go 套餐用量（`OPENCODE_GO_API_KEY`）
+  - `GET https://api.commandcode.ai/alpha/billing/credits` —— Command Code 窗口用量与剩余额度
+    （`COMMANDCODE_GOAT_API_KEY`）
   - `GET https://api.deepseek.com/user/balance` —— DeepSeek 账户余额（`DEEPSEEK_API_KEY`）
   - `GET https://opencode.ai/docs/zh-cn/go/` —— 文档里的单模型月度上限；之所以要抓页面，是因为网关
     自己的 `/models` 响应不带任何上限信息
